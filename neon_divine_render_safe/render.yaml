@@ -2,6 +2,7 @@ services:
   - type: cron
     name: neon-divine-daily-post
     runtime: python
+    rootDir: .
     schedule: "0 8,12,16,20 * * *"
-    buildCommand: ""
+    buildCommand: "pip install -r requirements.txt"
     startCommand: "python main.py"
