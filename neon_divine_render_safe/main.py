@@ -25,6 +25,11 @@ cloudinary.config(
 
 # 🔁 Objavi 1x - za Render cron job (4x/dan)
 def post_once():
+    logs = []
+    def log(msg):
+        print(msg)
+        logs.append(msg)
+
     locations = [
         "walking through the cherry blossoms in Kyoto",
         "standing under the Eiffel Tower in Paris",
@@ -45,7 +50,7 @@ def post_once():
     chosen_location = random.choice(locations)
     chosen_theme = random.choice(themes)
     prompt = f"Futuristic high-class woman with neon aura, sharp eyes, silver hair, cyberpunk fashion, ultra-detailed, {chosen_location}"
-    print(f"🧠 Generiram sliko z DALL·E: {prompt}")
+    log(f"🧠 Generiram sliko z DALL·E: {prompt}")
 
     response = openai.images.generate(
         model="dall-e-3",
@@ -54,7 +59,7 @@ def post_once():
         size="1024x1024"
     )
     image_url = response.data[0].url
-    print("🖼️ DALL·E URL:", image_url)
+    log("🖼️ DALL·E URL: " + image_url)
 
     img_data = requests.get(image_url).content
     local_filename = "generated_image.jpg"
@@ -63,20 +68,20 @@ def post_once():
 
     upload_result = cloudinary.uploader.upload(local_filename)
     final_image_url = upload_result['secure_url']
-    print("🌐 Cloudinary URL:", final_image_url)
+    log("🌐 Cloudinary URL: " + final_image_url)
 
     caption_prompt = (
         f"Write a short, powerful, inspirational quote in the style of a world leader or philosopher. Theme: {chosen_theme}. Make it suitable for a social media post."
     )
-    print("✍️ Generiram caption...")
+    log("✍️ Generiram caption...")
     chat_response = openai.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": caption_prompt}]
     )
     caption = chat_response.choices[0].message.content.strip()
-    print("📝 Caption:", caption)
+    log("📝 Caption: " + caption)
 
-    print("📤 Objavljam na Instagram...")
+    log("📤 Objavljam na Instagram...")
     create_url = f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media"
     create_payload = {
         'image_url': final_image_url,
@@ -85,7 +90,7 @@ def post_once():
     }
     create_res = requests.post(create_url, data=create_payload)
     create_data = create_res.json()
-    print("📦 IG Container:", create_data)
+    log("📦 IG Container: " + str(create_data))
 
     if 'id' in create_data:
         creation_id = create_data['id']
@@ -96,11 +101,11 @@ def post_once():
             'access_token': ACCESS_TOKEN
         }
         publish_res = requests.post(publish_url, data=publish_payload)
-        print("✅ Objavljeno na Instagram:", publish_res.json())
+        log("✅ Objavljeno na Instagram: " + str(publish_res.json()))
     else:
-        print("❌ Napaka pri IG objavi:", create_data)
+        log("❌ Napaka pri IG objavi: " + str(create_data))
 
-    print("📘 Objavljam na Facebook...")
+    log("📘 Objavljam na Facebook...")
     fb_post_url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/photos"
     fb_payload = {
         'url': final_image_url,
@@ -108,8 +113,12 @@ def post_once():
         'access_token': ACCESS_TOKEN
     }
     fb_res = requests.post(fb_post_url, data=fb_payload)
-    print("✅ Objavljeno na Facebook:", fb_res.json())
+    log("✅ Objavljeno na Facebook: " + str(fb_res.json()))
 
-# 🚀 Zagon za Render cron
+    return "\n".join(logs)
+
+# 🚀 Za test z ukazom: python main.py
 if __name__ == '__main__':
-    post_once()
+    output = post_once()
+    print("🧪 Rezultat:")
+    print(output)
