@@ -2,7 +2,7 @@ services:
   - type: cron
     name: neon-divine-daily-post
     runtime: python
-    rootDir: .
+    rootDir: neon_divine_render_safe  # <-- to je ključno
     schedule: "0 8,12,16,20 * * *"
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python main.py"
