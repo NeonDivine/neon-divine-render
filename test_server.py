@@ -1,5 +1,5 @@
 from flask import Flask
-from main import post_once
+from neon_divine_render_safe.main import post_once
 
 app = Flask(__name__)
 
