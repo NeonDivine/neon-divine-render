@@ -23,6 +23,44 @@ cloudinary.config(
     api_secret=os.getenv("CLOUDINARY_API_SECRET")
 )
 
+def ai_reply_to_comments(post_id, log):
+    log(f"💬 Iščem komentarje za AI odgovor na objavi {post_id}...")
+
+    url = f"https://graph.facebook.com/v19.0/{post_id}/comments?access_token={ACCESS_TOKEN}"
+    res = requests.get(url)
+    data = res.json()
+
+    if "data" not in data:
+        log("⚠️ Ni komentarjev za odgovor.")
+        return
+
+    for comment in random.sample(data["data"], min(2, len(data["data"]))):  # odgovori na naključne komentarje
+        comment_id = comment["id"]
+        message = comment["message"]
+
+        prompt = (
+            f"You are Neon Divine, a high-class inspirational female influencer. "
+            f"Respond in 1-2 short, kind and thoughtful sentences to this comment: \"{message}\". "
+            "Be soft, warm, real, and down-to-earth. Use simple, elegant language. If the comment is unclear, reply with 'Thank you so much for being here ✨'"
+        )
+
+        try:
+            chat_response = openai.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            reply_text = chat_response.choices[0].message.content.strip()
+        except Exception as e:
+            reply_text = "Thank you for your kind comment. You are appreciated ✨"
+
+        reply_url = f"https://graph.facebook.com/v19.0/{comment_id}/replies"
+        payload = {
+            "message": reply_text,
+            "access_token": ACCESS_TOKEN
+        }
+        reply_res = requests.post(reply_url, data=payload)
+        log(f"↪️ AI odgovorjeno: {reply_text}")
+
 # 🔁 Objavi 1x - za Render cron job (4x/dan + ponoči za dodatne časovne cone)
 def post_once():
     logs = []
@@ -145,6 +183,10 @@ def post_once():
         }
         publish_res = requests.post(publish_url, data=publish_payload)
         log("✅ Objavljeno na Instagram: " + str(publish_res.json()))
+
+        if 'id' in publish_res.json():
+            insta_post_id = publish_res.json()['id']
+            ai_reply_to_comments(insta_post_id, log)
     else:
         log("❌ Napaka pri IG objavi: " + str(create_data))
 
@@ -157,6 +199,10 @@ def post_once():
     }
     fb_res = requests.post(fb_post_url, data=fb_payload)
     log("✅ Objavljeno na Facebook: " + str(fb_res.json()))
+
+    if 'post_id' in fb_res.json():
+        fb_post_id = fb_res.json()['post_id']
+        ai_reply_to_comments(fb_post_id, log)
 
     return "\n".join(logs)
 
