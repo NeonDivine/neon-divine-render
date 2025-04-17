@@ -86,6 +86,10 @@ def post_once():
     def log(msg):
         print(msg)
         logs.append(msg)
+    # 🕒 Random zamik pred objavo
+    delay = random.randint(30, 180)
+    log(f"⏳ Čakam {delay} sekund pred objavo zaradi anti-bot zaščite...")
+    time.sleep(delay)
 
     categories = {
         "urban": [
