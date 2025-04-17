@@ -34,7 +34,7 @@ def ai_reply_to_comments(post_id, log):
         log("⚠️ Ni komentarjev za odgovor.")
         return
 
-    for comment in random.sample(data["data"], min(2, len(data["data"]))):  # odgovori na naključne komentarje
+    for comment in random.sample(data["data"], min(2, len(data["data"]))):
         comment_id = comment["id"]
         message = comment["message"]
 
@@ -60,6 +60,25 @@ def ai_reply_to_comments(post_id, log):
         }
         reply_res = requests.post(reply_url, data=payload)
         log(f"↪️ AI odgovorjeno: {reply_text}")
+
+def reply_to_all_recent_posts():
+    def log(msg):
+        print(msg)
+
+    for platform, endpoint in {
+        "Instagram": f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media",
+        "Facebook": f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/feed"
+    }.items():
+        res = requests.get(endpoint, params={"access_token": ACCESS_TOKEN})
+        data = res.json()
+        if "data" not in data:
+            log(f"⚠️ Ni objav za {platform}.")
+            continue
+
+        for post in data["data"][:5]:  # pregleda zadnjih 5 objav
+            post_id = post.get("id") or post.get("post_id")
+            if post_id:
+                ai_reply_to_comments(post_id, log)
 
 # 🔁 Objavi 1x - za Render cron job (4x/dan + ponoči za dodatne časovne cone)
 def post_once():
@@ -211,3 +230,4 @@ if __name__ == '__main__':
     output = post_once()
     print("🚪 Rezultat:")
     print(output)
+    reply_to_all_recent_posts()
