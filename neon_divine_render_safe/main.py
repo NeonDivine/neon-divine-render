@@ -231,7 +231,7 @@ def post_once():
 
 # 🚀 Za test z ukazom: python main.py
 if __name__ == '__main__':
-    output = post_once()
-    print("🚪 Rezultat:")
-    print(output)
-    reply_to_all_recent_posts()
+    # output = post_once()
+    # print("🚪 Rezultat:")
+    # print(output)
+    # reply_to_all_recent_posts()
