@@ -23,7 +23,7 @@ cloudinary.config(
     api_secret=os.getenv("CLOUDINARY_API_SECRET")
 )
 
-# 🔁 Objavi 1x - za Render cron job (4x/dan)
+# 🔁 Objavi 1x - za Render cron job (4x/dan + ponoči za dodatne časovne cone)
 def post_once():
     logs = []
     def log(msg):
@@ -58,6 +58,13 @@ def post_once():
             "smiling under cherry blossoms in Japan",
             "standing under the Eiffel Tower at dusk",
             "walking on the beach in Bali during sunset"
+        ],
+        "nighttime": [
+            "under the moonlight on a rooftop in NYC",
+            "next to glowing lanterns in Taiwan",
+            "on a quiet street in Berlin at 2 AM",
+            "walking solo through neon-lit Hong Kong alleys",
+            "in a misty Tokyo side street after midnight"
         ]
     }
 
@@ -84,7 +91,7 @@ def post_once():
         f"Futuristic high-class woman with minimalistic glowing futuristic outfit, soft neon aura, silver-blonde hair, " +
         f"sharp confident eyes, ultra-detailed photorealistic style, {chosen_location}"
     )
-    log(f"🧠 Generiram sliko z DALL·E: {prompt}")
+    log(f"🧐 Generiram sliko z DALL·E: {prompt}")
 
     response = openai.images.generate(
         model="dall-e-3",
@@ -156,5 +163,5 @@ def post_once():
 # 🚀 Za test z ukazom: python main.py
 if __name__ == '__main__':
     output = post_once()
-    print("🪟 Rezultat:")
+    print("🚪 Rezultat:")
     print(output)
