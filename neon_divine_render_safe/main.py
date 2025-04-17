@@ -30,26 +30,60 @@ def post_once():
         print(msg)
         logs.append(msg)
 
-    locations = [
-        "walking through the cherry blossoms in Kyoto",
-        "standing under the Eiffel Tower in Paris",
-        "on the cliffs of Santorini at sunset",
-        "in front of the futuristic skyline of Dubai Marina",
-        "walking on a neon-lit street in Tokyo",
-        "sitting by the canals of Venice"
-    ]
+    categories = {
+        "urban": [
+            "walking through the neon-lit streets of Seoul",
+            "posing in Times Square at night",
+            "in front of a glowing tram in Lisbon",
+            "waiting at a crosswalk in downtown Los Angeles",
+            "walking along the canals of Amsterdam"
+        ],
+        "nature": [
+            "standing on the cliffs of Santorini at sunset",
+            "next to the crashing waves in Iceland",
+            "amidst giant redwoods in California",
+            "walking through a foggy forest in Canada",
+            "relaxing by the lake in Switzerland"
+        ],
+        "epic": [
+            "on top of a sand dune in the Sahara at golden hour",
+            "standing on a cliff edge in Norway",
+            "under the Northern Lights in Finland",
+            "posing on a glass bridge above a canyon",
+            "meditating in the snowy peaks of the Himalayas"
+        ],
+        "romantic": [
+            "sitting at a cozy café in Paris",
+            "walking through the cherry blossoms in Kyoto",
+            "smiling under cherry blossoms in Japan",
+            "standing under the Eiffel Tower at dusk",
+            "walking on the beach in Bali during sunset"
+        ]
+    }
+
     themes = [
         "confidence and self-worth",
         "resilience and power",
         "ambition and discipline",
         "vision and legacy",
         "inner peace and presence",
-        "strength and fearlessness"
+        "strength and fearlessness",
+        "self-love and strength",
+        "freedom and confidence",
+        "growth and ambition",
+        "peace and clarity",
+        "balance and focus",
+        "joy and simplicity"
     ]
 
-    chosen_location = random.choice(locations)
+    category = random.choice(list(categories.keys()))
+    chosen_location = random.choice(categories[category])
     chosen_theme = random.choice(themes)
-    prompt = f"Futuristic high-class woman with neon aura, sharp eyes, silver hair, cyberpunk fashion, ultra-detailed, {chosen_location}"
+
+    prompt = (
+        f"Futuristic high-class woman with minimalistic glowing futuristic outfit, soft neon aura, silver-blonde hair, " +
+        f"sharp confident eyes, ultra-detailed photorealistic style, {chosen_location}"
+    )
     log(f"🧠 Generiram sliko z DALL·E: {prompt}")
 
     response = openai.images.generate(
@@ -71,7 +105,9 @@ def post_once():
     log("🌐 Cloudinary URL: " + final_image_url)
 
     caption_prompt = (
-        f"Write a short, powerful, inspirational quote in the style of a world leader or philosopher. Theme: {chosen_theme}. Make it suitable for a social media post."
+        f"Write a short, powerful, inspirational quote in the style of a world leader or philosopher. "
+        f"Theme: {chosen_theme}. Make it suitable for a social media post. "
+        "Add 5 trending motivational hashtags at the end (e.g. #mindset #success #focus)."
     )
     log("✍️ Generiram caption...")
     chat_response = openai.chat.completions.create(
@@ -105,7 +141,7 @@ def post_once():
     else:
         log("❌ Napaka pri IG objavi: " + str(create_data))
 
-    log("📘 Objavljam na Facebook...")
+    log("📜 Objavljam na Facebook...")
     fb_post_url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/photos"
     fb_payload = {
         'url': final_image_url,
@@ -120,5 +156,5 @@ def post_once():
 # 🚀 Za test z ukazom: python main.py
 if __name__ == '__main__':
     output = post_once()
-    print("🧪 Rezultat:")
+    print("🪟 Rezultat:")
     print(output)
