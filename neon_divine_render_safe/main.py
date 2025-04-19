@@ -32,7 +32,18 @@ visual_styles = [
     "ultra-detailed woman with liquid metal outfit"
 ]
 
+# ⏰ Omeji objavljanje glede na čas (2x SLO + 1x US čas)
+def allowed_to_post():
+    now = datetime.utcnow()
+    hour = now.hour
+    allowed_hours = [6, 12, 20]  # UTC → 8:00, 14:00, 22:00 SLO (CET) / 2:00 AM EST
+    return hour in allowed_hours
+
 def post_once():
+    if not allowed_to_post():
+        print("⏳ Čas ni pravi za objavo, čakamo na naslednji slot.")
+        return
+
     logs = []
     def log(msg):
         print(msg)
@@ -65,7 +76,7 @@ def post_once():
     theme = random.choice(themes)
 
     prompt = f"{style}, {location}, soft neon lights, cinematic lighting, photorealistic"
-    log(f"🧠 Generiram sliko z DALL·E: {prompt}")
+    log(f"🧐 Generiram sliko z DALL·E: {prompt}")
 
     response = openai.images.generate(
         model="dall-e-3",
@@ -114,12 +125,6 @@ def post_once():
     return "\n".join(logs)
 
 if __name__ == '__main__':
-    now = datetime.utcnow()
-    hour = now.hour
-    # Objava ob 8:00 UTC (EU zjutraj), 20:00 UTC (EU zvečer), 01:00 UTC (ZDA popoldne/večer)
-    if hour in [8, 20, 1]:
-        output = post_once()
-        print("\n--- REZULTAT ---\n")
-        print(output)
-    else:
-        print("⏳ Čas ni pravi za objavo, čakamo na naslednji slot.")
+    output = post_once()
+    print("\n--- REZULTAT ---\n")
+    print(output)
