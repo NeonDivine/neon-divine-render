@@ -32,56 +32,6 @@ visual_styles = [
     "ultra-detailed woman with liquid metal outfit"
 ]
 
-# ⏱️ Zamik med komentarji
-DELAY_BETWEEN_COMMENTS = (30, 90)  # sekund
-MAX_REPLIES_PER_POST = 2
-
-
-def ai_reply_to_comments(post_id, log):
-    log(f"💬 Iščem komentarje za AI odgovor na objavi {post_id}...")
-    url = f"https://graph.facebook.com/v19.0/{post_id}/comments?access_token={ACCESS_TOKEN}"
-    res = requests.get(url)
-    data = res.json()
-    if "data" not in data:
-        log("⚠️ Ni komentarjev za odgovor.")
-        return
-
-    for comment in random.sample(data["data"], min(MAX_REPLIES_PER_POST, len(data["data"]))):
-        comment_id = comment["id"]
-        message = comment["message"]
-        prompt = (
-            f"You are Neon Divine, a high-class inspirational AI woman. Respond kindly to this comment: '{message}'. "
-            f"Use short, elegant, non-repetitive language, keep tone human and heartfelt."
-        )
-        try:
-            chat_response = openai.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            reply_text = chat_response.choices[0].message.content.strip()
-        except:
-            reply_text = "Thank you for sharing your thoughts. It means a lot."
-
-        reply_url = f"https://graph.facebook.com/v19.0/{comment_id}/replies"
-        payload = {"message": reply_text, "access_token": ACCESS_TOKEN}
-        requests.post(reply_url, data=payload)
-        log(f"↪️ AI odgovorjeno: {reply_text}")
-        time.sleep(random.randint(*DELAY_BETWEEN_COMMENTS))
-
-
-def reply_to_recent_fb_posts(log):
-    url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/feed?access_token={ACCESS_TOKEN}"
-    res = requests.get(url)
-    data = res.json()
-    if "data" not in data:
-        log("⚠️ Ni objav za Facebook.")
-        return
-    for post in data["data"][:5]:
-        post_id = post.get("id") or post.get("post_id")
-        if post_id:
-            ai_reply_to_comments(post_id, log)
-
-
 def post_once():
     logs = []
     def log(msg):
@@ -153,8 +103,6 @@ def post_once():
         pub_payload = {"creation_id": ig_res['id'], "access_token": ACCESS_TOKEN}
         pub_res = requests.post(pub_url, data=pub_payload).json()
         log(f"✅ IG objavljeno: {pub_res}")
-        if 'id' in pub_res:
-            ai_reply_to_comments(pub_res['id'], log)
     else:
         log("❌ IG ni uspel.")
 
@@ -162,15 +110,16 @@ def post_once():
     fb_payload = {"url": final_url, "caption": caption, "access_token": ACCESS_TOKEN}
     fb_res = requests.post(fb_url, data=fb_payload).json()
     log(f"✅ FB objavljeno: {fb_res}")
-    if 'post_id' in fb_res:
-        ai_reply_to_comments(fb_res['post_id'], log)
 
     return "\n".join(logs)
 
-
 if __name__ == '__main__':
-    output = post_once()
-    print("\n--- REZULTAT ---\n")
-    print(output)
-    print("\n--- Odgovori na komentarje ---\n")
-    reply_to_recent_fb_posts(lambda x: print(x))
+    now = datetime.utcnow()
+    hour = now.hour
+    # Objava ob 8:00 UTC (EU zjutraj), 20:00 UTC (EU zvečer), 01:00 UTC (ZDA popoldne/večer)
+    if hour in [8, 20, 1]:
+        output = post_once()
+        print("\n--- REZULTAT ---\n")
+        print(output)
+    else:
+        print("⏳ Čas ni pravi za objavo, čakamo na naslednji slot.")
