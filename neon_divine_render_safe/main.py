@@ -32,13 +32,14 @@ visual_styles = [
     "ultra-detailed woman with liquid metal outfit"
 ]
 
-# 🕒 Časovni sloti za objave: 2x SLO (UTC+2) + 1x US (EST)
+# ⏰ Nova logika: Vedno dovoli ročno objavo, če je nastavljen ročni zagon
 def allowed_to_post():
+    manual_trigger = os.getenv("MANUAL_TRIGGER", "false").lower() == "true"
+    if manual_trigger:
+        return True
     now = datetime.utcnow()
     hour = now.hour
-    # 6, 12 = 8:00 in 14:00 po CET / 20 = 22:00 UTC = 6PM EST
-    return hour in [6, 12, 20]
-
+    return hour in [6, 8, 18]  # 06:00 UTC (8:00 SLO), 08:00 UTC (10:00 SLO), 18:00 UTC (20:00 SLO / 14:00 EST)
 
 def post_once():
     logs = []
@@ -46,7 +47,6 @@ def post_once():
         print(msg)
         logs.append(msg)
 
-    # Če ni pravi čas, lahko še vedno ročno triggeramo
     if not allowed_to_post():
         log("⏳ Čas ni pravi za objavo, čakamo na naslednji slot.")
         return "\n".join(logs)
