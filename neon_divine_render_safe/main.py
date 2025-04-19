@@ -32,22 +32,24 @@ visual_styles = [
     "ultra-detailed woman with liquid metal outfit"
 ]
 
-# ⏰ Omeji objavljanje glede na čas (2x SLO + 1x US čas)
+# 🕒 Časovni sloti za objave: 2x SLO (UTC+2) + 1x US (EST)
 def allowed_to_post():
     now = datetime.utcnow()
     hour = now.hour
-    allowed_hours = [6, 12, 20]  # UTC → 8:00, 14:00, 22:00 SLO (CET) / 2:00 AM EST
-    return hour in allowed_hours
+    # 6, 12 = 8:00 in 14:00 po CET / 20 = 22:00 UTC = 6PM EST
+    return hour in [6, 12, 20]
+
 
 def post_once():
-    if not allowed_to_post():
-        print("⏳ Čas ni pravi za objavo, čakamo na naslednji slot.")
-        return
-
     logs = []
     def log(msg):
         print(msg)
         logs.append(msg)
+
+    # Če ni pravi čas, lahko še vedno ročno triggeramo
+    if not allowed_to_post():
+        log("⏳ Čas ni pravi za objavo, čakamo na naslednji slot.")
+        return "\n".join(logs)
 
     categories = {
         "luxury": [
@@ -78,13 +80,18 @@ def post_once():
     prompt = f"{style}, {location}, soft neon lights, cinematic lighting, photorealistic"
     log(f"🧐 Generiram sliko z DALL·E: {prompt}")
 
-    response = openai.images.generate(
-        model="dall-e-3",
-        prompt=prompt,
-        n=1,
-        size="1024x1024"
-    )
-    image_url = response.data[0].url
+    try:
+        response = openai.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            n=1,
+            size="1024x1024"
+        )
+        image_url = response.data[0].url
+    except Exception as e:
+        log(f"❌ Napaka pri generaciji slike: {e}")
+        return "\n".join(logs)
+
     img_data = requests.get(image_url).content
     with open("generated_image.jpg", "wb") as f:
         f.write(img_data)
@@ -96,11 +103,16 @@ def post_once():
     caption_prompt = (
         f"Write a powerful, real, short inspirational quote. Theme: {theme}. Include 5 trending motivational hashtags."
     )
-    chat = openai.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": caption_prompt}]
-    )
-    caption = chat.choices[0].message.content.strip()
+    try:
+        chat = openai.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": caption_prompt}]
+        )
+        caption = chat.choices[0].message.content.strip()
+    except Exception as e:
+        caption = "Stay strong. Keep rising. #motivation"
+        log(f"⚠️ Napaka pri generiranju captiona: {e}")
+
     log(f"✍️ Caption: {caption}")
 
     ig_url = f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media"
@@ -115,7 +127,7 @@ def post_once():
         pub_res = requests.post(pub_url, data=pub_payload).json()
         log(f"✅ IG objavljeno: {pub_res}")
     else:
-        log("❌ IG ni uspel.")
+        log(f"❌ IG ni uspel: {ig_res}")
 
     fb_url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/photos"
     fb_payload = {"url": final_url, "caption": caption, "access_token": ACCESS_TOKEN}
@@ -123,6 +135,7 @@ def post_once():
     log(f"✅ FB objavljeno: {fb_res}")
 
     return "\n".join(logs)
+
 
 if __name__ == '__main__':
     output = post_once()
