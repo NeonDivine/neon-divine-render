@@ -1,3 +1,4 @@
+
 import openai
 import requests
 import time
@@ -39,7 +40,7 @@ def allowed_to_post():
         return True
     now = datetime.utcnow()
     hour = now.hour
-    return hour in [6, 18, 23]  # 08:00 SLO, 20:00 SLO, 01:00 SLO (večerni US čas)
+    return hour in [6, 8, 18]  # 06:00 UTC (8:00 SLO), 08:00 UTC (10:00 SLO), 18:00 UTC (20:00 SLO / 14:00 EST)
 
 def post_once():
     logs = []
@@ -78,7 +79,7 @@ def post_once():
     theme = random.choice(themes)
 
     prompt = f"{style}, {location}, soft neon lights, cinematic lighting, photorealistic"
-    log(f"🤮 Generiram sliko z DALL·E: {prompt}")
+    log(f"🧐 Generiram sliko z DALL·E: {prompt}")
 
     try:
         response = openai.images.generate(
@@ -115,26 +116,17 @@ def post_once():
 
     log(f"✍️ Caption: {caption}")
 
-    ig_url = f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media"
-    ig_payload = {"image_url": final_url, "caption": caption, "access_token": ACCESS_TOKEN}
-    ig_res = requests.post(ig_url, data=ig_payload).json()
-    log(f"📦 IG Container: {ig_res}")
+    # ⛔ IG trenutno izklopljen zaradi bana
+    log("🚫 Preskočena objava na Instagram zaradi trenutnega limita ali bana.")
 
-    if 'id' in ig_res:
-        time.sleep(5)
-        pub_url = f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish"
-        pub_payload = {"creation_id": ig_res['id'], "access_token": ACCESS_TOKEN}
-        pub_res = requests.post(pub_url, data=pub_payload).json()
-        log(f"✅ IG objavljeno: {pub_res}")
-    else:
-        log(f"🚫 Preskočena objava na Instagram zaradi trenutnega limita ali bana: {ig_res}")
-
+    # ✅ Objava na Facebook
     fb_url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/photos"
     fb_payload = {"url": final_url, "caption": caption, "access_token": ACCESS_TOKEN}
     fb_res = requests.post(fb_url, data=fb_payload).json()
     log(f"✅ FB objavljeno: {fb_res}")
 
     return "\n".join(logs)
+
 
 if __name__ == '__main__':
     output = post_once()
