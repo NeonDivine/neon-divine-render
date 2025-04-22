@@ -1,4 +1,3 @@
-
 import openai
 import requests
 import time
@@ -116,10 +115,20 @@ def post_once():
 
     log(f"✍️ Caption: {caption}")
 
-    # ⛔ IG trenutno izklopljen zaradi bana
-    log("🚫 Preskočena objava na Instagram zaradi trenutnega limita ali bana.")
+    ig_url = f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media"
+    ig_payload = {"image_url": final_url, "caption": caption, "access_token": ACCESS_TOKEN}
+    ig_res = requests.post(ig_url, data=ig_payload).json()
+    log(f"📦 IG Container: {ig_res}")
 
-    # ✅ Objava na Facebook
+    if 'id' in ig_res:
+        time.sleep(5)
+        pub_url = f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish"
+        pub_payload = {"creation_id": ig_res['id'], "access_token": ACCESS_TOKEN}
+        pub_res = requests.post(pub_url, data=pub_payload).json()
+        log(f"✅ IG objavljeno: {pub_res}")
+    else:
+        log(f"❌ IG ni uspel: {ig_res}")
+
     fb_url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/photos"
     fb_payload = {"url": final_url, "caption": caption, "access_token": ACCESS_TOKEN}
     fb_res = requests.post(fb_url, data=fb_payload).json()
